@@ -1,0 +1,18 @@
+RANDOM_BIT_COUNT = 4
+OBS_SET = ["w1", "w2", "w3"]
+
+def circuit(secret, randomness):
+    r0, r1, d0, d1 = randomness
+
+    w0 = (secret + r0 + r1 + d0) % 2
+    w1 = (w0 + d1) % 2
+    w2 = (d0 + r0) % 2
+    w3 = (d1 + r1) % 2
+    
+    return {
+        "w0": w0, "w1": w1, "w2": w2, "w3": w3
+    }
+
+
+def get_wire_names():
+    return ["w0", "w1", "w2", "w3"]

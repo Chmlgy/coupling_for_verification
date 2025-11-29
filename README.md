@@ -1,0 +1,1 @@
+GLPK is required to run this script. Download it with `pip install pyglpk`, but make sure to have the C header files of GLPK. If you do not have them, install them with `sudo apt install libglpk-dev glpk-utils`.
