@@ -13,7 +13,7 @@ import itertools
 #       topological sort on possible probes for a speed up
 
 RANDOM_BIT_COUNT = 2
-OBS_SET = ["w1"]
+OBS_SET = ["w0"]
 
 def circuit(secret, randomness):
     r0, d0 = randomness
@@ -114,7 +114,7 @@ def assign_coupling(proj_rows, proj_cols, proj_matrix, random_bit_count):
     num_vars = len(pair_to_var)
 
     lp = glpk.LPX()
-    lp.name = "d_probing_security"
+    lp.name = "single_input_d_probing_security"
     lp.obj.maximize = True
 
     # variables
@@ -133,7 +133,7 @@ def assign_coupling(proj_rows, proj_cols, proj_matrix, random_bit_count):
 
     #   - row marginal
     for r0_val in range(N):
-        lp.rows[current_row].name = f"row_marginal_{r0_val}"
+        # lp.rows[current_row].name = f"row_marginal_{r0_val}"
         lp.rows[current_row].bounds = prob_mass, prob_mass
         
         for r1_val in range(N):
@@ -144,7 +144,7 @@ def assign_coupling(proj_rows, proj_cols, proj_matrix, random_bit_count):
 
     #   - column marginal
     for r1_val in range(N):
-        lp.rows[current_row].name = f"col_marginal_{r1_val}"
+        # lp.rows[current_row].name = f"col_marginal_{r1_val}"
         lp.rows[current_row].bounds = prob_mass, prob_mass
         
         for r0_val in range(N):
