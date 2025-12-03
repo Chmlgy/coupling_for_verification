@@ -1,17 +1,6 @@
 import glpk
 import itertools
 
-# TODO: t-NI & t-SNI
-#       'off-diagonal entries = 0' as an additional equation set for LP (might make it faster)
-#       multiple inputs should be supported (this is trickier than one might think)
-#       maximizing the sum along the diagonal gives information on how much leakage is present
-#           (if it is 0, the secret can be fully obtained through algebraic operations on the probe set)
-#           (if it is <1, the secret can be obtained through differential analysis)
-#           (this idea should be formally further studied)
-#       read off from an SSA program file (or a netlist) for comfort
-#       try all possible probe sets to complete the method
-#       topological sort on possible probes for a speed up
-
 RANDOM_BIT_COUNT = 2
 OBS_SET = ["w0"]
 

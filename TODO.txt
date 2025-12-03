@@ -1,0 +1,17 @@
+TODO:   t-NI & t-SNI formulations via couplings
+        `off-diagonal entries = 0` as an additional equation set for LP (might make it faster)
+        multiple inputs should be supported (this is trickier than one might think)
+        maximizing the sum along the diagonal gives information on how much leakage is present
+            (if it is 0, the secret can be fully obtained through algebraic operations on the probe set)
+            (if it is <1, the secret can be obtained through differential analysis)
+            (this idea should be formally further studied)
+        read off from an SSA program file (or a Verilog file) for comfort
+        try all possible probe sets to complete the method
+            afterwards: `topological` sort on possible probes for a speed up
+        
+        the Monge formulation for the initial coupling over the randomness spaces might be enough
+        complementing the rewrite tools by picking off where they cannot simplify any further could be a plausible direction
+
+misc.:  polytopes for counting solutions in the linear case (might not occur in practice)
+        considering arithmetic masking over a given field
+        glitch resistance as an important modification to the model
