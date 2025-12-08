@@ -12,6 +12,17 @@ TODO:   t-NI & t-SNI formulations via couplings
         the Monge formulation for the initial coupling over the randomness spaces might be enough
         complementing the rewrite tools by picking off where they cannot simplify any further could be a plausible direction
 
-misc.:  polytopes for counting solutions in the linear case (might not occur in practice)
+misc.:  polytopes for counting solutions in the linear case (might not occur frequently in practice)
         considering arithmetic masking over a given field
-        glitch resistance as an important modification to the model
+        glitch and transition resistance as an important modification to the model
+
+next week (15/12):
+        decipher the verilog code (ask Tolun Hoca)
+        parse it with `pyverilog`
+        try to run our code with it
+        try to run maskverif on it
+            ditch the registers
+        write the proof for Kantorovich => Monge
+        experiment with Kantorovich vs Monge
+        fix the code
+        Monge is enough for no leakage, but for leakage, maybe Kantorovich?
