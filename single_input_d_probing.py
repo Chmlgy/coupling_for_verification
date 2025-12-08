@@ -1,23 +1,30 @@
 import glpk
 import itertools
 
-RANDOM_BIT_COUNT = 2
-OBS_SET = ["w0"]
+RANDOM_BIT_COUNT = 10
+OBS_SET = ["w4", "w5", "w6", "w7", "w8", "w9"]
 
 def circuit(secret, randomness):
-    r0, d0 = randomness
+    r0, r1, r2, r3, r4, d0, d1, d2, d3, d4 = randomness
 
-    w0 = (secret + r0) % 2
-    w1 = (w0 * r0) % 2
-    w2 = (w1 + d0) % 2
+    w0 = (secret + r0 + r1 + r2 + r3 + r4 + d0) % 2
+    w1 = (w0 + d1) % 2
+    w2 = (w1 + d2) % 2
+    w3 = (w2 + d3) % 2
+    w4 = (w3 + d4) % 2
+    w5 = (r0 + d0) % 2
+    w6 = (r1 + d1) % 2
+    w7 = (r2 + d2) % 2
+    w8 = (r3 + d3) % 2
+    w9 = (r4 + d4) % 2
     
     return {
-        "w0": w0, "w1": w1, "w2": w2
+        "w0": w0, "w1": w1, "w2": w2, "w3": w3, "w4": w4, "w5": w5, "w6": w6, "w7": w7, "w8": w8, "w9": w9
     }
 
 
 def get_wire_names():
-    return ["w0", "w1", "w2"]
+    return ["w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8", "w9"]
 
 
 def bits_to_int(bits):
@@ -88,76 +95,60 @@ def project_matrix(full_rows, full_cols, full_matrix, observation_set):
     return proj_space, proj_space, proj_matrix
 
 
-def assign_coupling(proj_rows, proj_cols, proj_matrix, random_bit_count):
+def assign_coupling(proj_matrix, random_bit_count):
     N = 2 ** random_bit_count
     prob_mass = 1.0 / N
     
-    # TODO: this is a little stupid
-    pair_to_var = {}
-    var_idx = 0
-    for r0_val in range(N):
-        for r1_val in range(N):
-            pair_to_var[(r0_val, r1_val)] = var_idx
-            var_idx += 1
-            
-    num_vars = len(pair_to_var)
+    # iterate only the diagonal entries
+    valid_vars = []
+    for trace in proj_matrix:
+        if trace in proj_matrix[trace]: # check if it is nonzero
+            pairs = proj_matrix[trace][trace]
+            for (r0_val, r1_val) in pairs:
+                valid_vars.append((r0_val, r1_val))
+                
+    num_vars = len(valid_vars)
+    if num_vars == 0:
+        return False
 
+    # set up the solver
     lp = glpk.LPX()
     lp.name = "single_input_d_probing_security"
-    lp.obj.maximize = True
+    lp.obj.maximize = True 
 
     # variables
     lp.cols.add(num_vars)
-    
     for c in lp.cols:
-        c.bounds = 0.0, 1.0
+        c.bounds = 0.0, prob_mass
 
+    for i in range(num_vars):
+        lp.obj[i] = 1.0
 
     # constraints:
-    num_rows = N + N + 1
-    lp.rows.add(num_rows)
-    
+    lp.rows.add(2 * N)
+
+    for i in range(N):
+        lp.rows[i].bounds = 0.0, prob_mass
+        lp.rows[N + i].bounds = 0.0, prob_mass
+
     matrix_entries = []
-    current_row = 0
-
-    #   - row marginal
-    for r0_val in range(N):
-        # lp.rows[current_row].name = f"row_marginal_{r0_val}"
-        lp.rows[current_row].bounds = prob_mass, prob_mass
-        
-        for r1_val in range(N):
-            v_idx = pair_to_var[(r0_val, r1_val)]
-            matrix_entries.append((current_row, v_idx, 1.0))
-        
-        current_row += 1
-
-    #   - column marginal
-    for r1_val in range(N):
-        # lp.rows[current_row].name = f"col_marginal_{r1_val}"
-        lp.rows[current_row].bounds = prob_mass, prob_mass
-        
-        for r0_val in range(N):
-            v_idx = pair_to_var[(r0_val, r1_val)]
-            matrix_entries.append((current_row, v_idx, 1.0))
-            
-        current_row += 1
-
-    #   - projected matrix is diagonal
-    lp.rows[current_row].name = "diagonal_sum"
-    lp.rows[current_row].bounds = 1.0, 1.0
-
-    for trace in proj_rows:
-        pairs = proj_matrix[trace][trace]
-        for (r0_val, r1_val) in pairs:
-            v_idx = pair_to_var[(r0_val, r1_val)]
-            matrix_entries.append((current_row, v_idx, 1.0))
+    for var_idx, (r0_val, r1_val) in enumerate(valid_vars):
+        matrix_entries.append((r0_val, var_idx, 1.0))
+        matrix_entries.append((N + r1_val, var_idx, 1.0))
 
     lp.matrix = matrix_entries
     lp.simplex(msg_lev=0)
+
+    # leakage bound
+    coupled_mass = lp.obj.value
+    leakage = 1.0 - coupled_mass
     
-    # opt                       => success
-    # undef, infeas, or etc.    => fail
-    return lp.status == "opt"
+    # TODO: floating point stuff
+    if leakage < 1e-12: 
+        leakage = 0.0
+        return True
+    print(f"Leakage amount: {leakage}")
+    return False
 
 
 def print_matrix(rows, cols, matrix, title):
@@ -216,6 +207,5 @@ if __name__ == "__main__":
         print_matrix(rows, cols, M, "Full Matrix")
         print_matrix(p_rows, p_cols, M_proj, title=f"Projected Matrix ({OBS_SET})")
 
-    is_secure = assign_coupling(p_rows, p_cols, M_proj,
-                                     random_bit_count=RANDOM_BIT_COUNT)
+    is_secure = assign_coupling(M_proj, random_bit_count=RANDOM_BIT_COUNT)
     print(f"Do the probes leak? {"NO" if is_secure else "YES"}")
